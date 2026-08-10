@@ -9,6 +9,7 @@ class GUI:
         self.root = tk.Tk()
         self.state = state # True = START, False = KILL
         self.busy = False
+        self.root.protocol("WM_DELETE_WINDOW", self.handle_early_exit)
         self.frame = tk.Frame(self.root, bg="#f3ebdd", padx=10, pady=50)
         self.button = tk.Button(
             self.frame,
@@ -268,3 +269,8 @@ class GUI:
             self.state = True
             self.busy = False
             return
+        
+    def handle_early_exit(self):
+        if not self.state:
+            self.handle_click()
+        self.root.destroy()

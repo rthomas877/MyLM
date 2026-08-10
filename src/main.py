@@ -5,7 +5,7 @@ async def start_server():
     print("STARTING SERVER")
     await asyncio.sleep(2)
     print("STARTED")
-    return(("8001", "192.193.20.30"))
+    return(("8000", "192.193.20.30"))
 
 async def kill_server():
     print("KILLING SERVER")
