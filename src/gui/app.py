@@ -3,7 +3,7 @@ import asyncio
 
 class GUI:
 
-    def __init__(self, state, on_start, on_kill, models):
+    def __init__(self, state, on_start, on_kill):
         self.on_start = on_start
         self.on_kill = on_kill
         self.root = tk.Tk()
@@ -41,13 +41,6 @@ class GUI:
                 height=2,
                 pady=20
             )
-        self.models = models
-        self.selected = tk.StringVar(value=self.models[0])
-        self.dropdown = tk.OptionMenu(
-            self.frame,
-            self.selected,
-            *self.models
-        )
         
         # high level setup
         GUI.setup(self.root)
@@ -58,11 +51,8 @@ class GUI:
         # frame contents
         GUI.build_heading(self.frame) # MyLM Server
 
-        # buils dropdown when server not running
-        GUI.build_model_selection(self.state, self.frame, self.text, self.dropdown)
-
         # hosting info when active
-        GUI.build_hosting_info(self.frame, self.localhost_textbox, "8000", self.lan_textbox, "192.921.20.20")
+        GUI.build_hosting_info(self.frame, self.localhost_textbox, "N/A", self.lan_textbox, "N/A")
         
         # usage button
         GUI.build_button(self.frame, self.state, self.button)
@@ -110,37 +100,6 @@ class GUI:
         text.bind("<B1-Motion>", lambda event: "break")
         text.pack()
 
-    def build_model_selection(active, frame, text, dropdown):
-        if active:
-            # build "Model: "
-            font_style = "Helvetica Neue"
-            text.insert("end", "Model:", "1")
-            text.tag_configure(
-                "1",
-                font=(font_style, 30),
-                foreground="#1f3a2e",
-            )
-            text.tag_configure("1", justify="center")
-            text.config(state="disabled")
-            text.bind("<Button-1>", lambda event: "break")
-            text.bind("<Double-Button-1>", lambda event: "break")
-            text.bind("<Triple-Button-1>", lambda event: "break")
-            text.bind("<B1-Motion>", lambda event: "break")
-            text.pack()
-
-            # build dropdown
-            dropdown.config(
-                font=("PT Mono", 18),
-                width=40,
-                fg="#1f3a2e",
-            )
-            dropdown["menu"].config(
-                font=("PT Mono", 18),
-                fg="#1f3a2e",
-            )
-
-            dropdown.pack()
-
     def build_button(frame, state, button):
         if state:
             text = "Start Server"
@@ -170,10 +129,6 @@ class GUI:
         )
         localhost_textbox.tag_configure("1", justify="center")
         localhost_textbox.config(state="disabled")
-        localhost_textbox.bind("<Button-1>", lambda event: "break")
-        localhost_textbox.bind("<Double-Button-1>", lambda event: "break")
-        localhost_textbox.bind("<Triple-Button-1>", lambda event: "break")
-        localhost_textbox.bind("<B1-Motion>", lambda event: "break")
         localhost_textbox.pack_forget()
 
         # build lan info
@@ -185,10 +140,6 @@ class GUI:
         )
         lan_textbox.tag_configure("1", justify="center")
         lan_textbox.config(state="disabled")
-        lan_textbox.bind("<Button-1>", lambda event: "break")
-        lan_textbox.bind("<Double-Button-1>", lambda event: "break")
-        lan_textbox.bind("<Triple-Button-1>", lambda event: "break")
-        lan_textbox.bind("<B1-Motion>", lambda event: "break")
         lan_textbox.pack_forget()
 
     def update_hosting_info(frame, localhost_textbox, local_port, lan_textbox, lan_info):
@@ -196,7 +147,7 @@ class GUI:
         localhost_textbox.config(state="normal")
         localhost_textbox.delete("1.0", "end")
         font_style = "PT Mono"
-        localhost_textbox.insert("end", f"Localhost Port: {local_port}", "1")
+        localhost_textbox.insert("end", f"Port: {local_port}", "1")
         localhost_textbox.tag_configure(
             "1",
             font=(font_style, 20),
@@ -204,10 +155,6 @@ class GUI:
         )
         localhost_textbox.tag_configure("1", justify="center")
         localhost_textbox.config(state="disabled")
-        localhost_textbox.bind("<Button-1>", lambda event: "break")
-        localhost_textbox.bind("<Double-Button-1>", lambda event: "break")
-        localhost_textbox.bind("<Triple-Button-1>", lambda event: "break")
-        localhost_textbox.bind("<B1-Motion>", lambda event: "break")
         localhost_textbox.pack_forget()
 
         # build lan info
@@ -221,49 +168,48 @@ class GUI:
         )
         lan_textbox.tag_configure("1", justify="center")
         lan_textbox.config(state="disabled")
-        lan_textbox.bind("<Button-1>", lambda event: "break")
-        lan_textbox.bind("<Double-Button-1>", lambda event: "break")
-        lan_textbox.bind("<Triple-Button-1>", lambda event: "break")
-        lan_textbox.bind("<B1-Motion>", lambda event: "break")
         lan_textbox.pack_forget()
 
     def start_gui(self):
         self.root.mainloop()
 
     def handle_click(self):
-        if self.busy:
+        if self.busy: # if button already clicked for same process, exit
             return
         # if waiting to start
         if self.state:
-            self.busy = True
+            self.busy = True # prevents double clicking button
             self.button.config(state="disabled")
             self.button.config(text="Working...")
             self.root.update()
+
+            # run server, receive port info
             local_port, lan_info = asyncio.run(self.on_start())
-            self.button.config(text="Kill Server")
-            self.button.config(state="normal")
-            self.dropdown.pack_forget()
-            self.text.pack_forget()
+            
+            # update and display hosting info
             GUI.update_hosting_info(self.frame, self.localhost_textbox, local_port, self.lan_textbox, lan_info)
             self.localhost_textbox.pack()
             self.lan_textbox.pack()
+
+            self.button.config(text="Kill Server")
+            self.button.config(state="normal")
+            
             self.root.update_idletasks()
             self.root.update()
-            self.state = False
-            self.busy = False
+            
+            self.state = False # waiting to kill now
+            self.busy = False # button action finished
             return
         else: # if waiting to kill
             self.busy = True
             self.button.config(state="disabled")
             self.button.config(text="Working...")
             self.root.update()
-            asyncio.run(self.on_kill())
+            self.on_kill()
             self.button.config(text="Start Server")
             self.button.config(state="normal")
             self.localhost_textbox.pack_forget()
             self.lan_textbox.pack_forget()
-            self.text.pack()
-            self.dropdown.pack()
             self.root.update_idletasks()
             self.root.update()
             self.state = True
