@@ -15,7 +15,6 @@ async def root():
 async def status():
     return {"running": True}
 
-# TODO implement post endpoint for chat completions
 @router.post("/chat")
 async def chat(request: ChatRequest):
     chat_object = Chat()
