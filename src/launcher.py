@@ -40,7 +40,7 @@ async def run_server():
         print("LLM already running")
     else:
         model_path = os.path.expanduser(
-            "/Users/ryanthomas/MyLM/models/Qwen3-8B-Q4_K_M.gguf"
+            "~/MyLM/models/Qwen3-8B-Q4_K_M.gguf"
         )
 
         llm_process = subprocess.Popen([
