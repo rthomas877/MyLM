@@ -91,7 +91,9 @@ def stop_server():
     global server_process
     global llm_process
 
-    if server_process is None and llm_process is None:
+    if server_process is None:
+        return
+    if llm_process is None:
         return
 
     if server_process.is_alive():
