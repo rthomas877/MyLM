@@ -1,6 +1,11 @@
 from fastapi import APIRouter 
+from pydantic import BaseModel
+from chat import Chat
 
 router = APIRouter()
+
+class ChatRequest(BaseModel):
+    query: str
 
 @router.get("/")
 async def root():
@@ -12,5 +17,8 @@ async def status():
 
 # TODO implement post endpoint for chat completions
 @router.post("/chat")
-async def chat():
-    return {"response": ""}
+async def chat(request: ChatRequest):
+    chat_object = Chat()
+    query = request.query
+    response = await chat_object.chat_completion(query)
+    return {"response": response}
